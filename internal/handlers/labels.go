@@ -95,6 +95,10 @@ func (h *LabelsHandler) Create(c *gin.Context) {
 		return
 	}
 	if err := h.db.Create(&label).Error; err != nil {
+		if isDuplicateKeyError(err) {
+			c.JSON(http.StatusConflict, gin.H{"error": "a label with that slug already exists"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create label"})
 		return
 	}
@@ -181,6 +185,15 @@ func (h *LabelsHandler) Delete(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+// isDuplicateKeyError reports whether err is a PostgreSQL unique violation (23505).
+func isDuplicateKeyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	s := err.Error()
+	return strings.Contains(s, "23505") || strings.Contains(s, "duplicate key")
 }
 
 // LabelExists returns true if a label with the given slug exists and is owned by the user.

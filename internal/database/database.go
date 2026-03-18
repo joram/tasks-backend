@@ -36,6 +36,10 @@ func AutoMigrate(db *gorm.DB) error {
 	); err != nil {
 		return err
 	}
+	// Drop legacy unique index on labels(slug) so slug is unique per user, not globally.
+	if err := db.Exec(`DROP INDEX IF EXISTS idx_labels_slug`).Error; err != nil {
+		log.Printf("migration drop idx_labels_slug: %v", err)
+	}
 	FlattenTasksWithParentAndChildren(db)
 	return nil
 }
