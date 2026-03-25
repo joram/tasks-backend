@@ -26,6 +26,19 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 	return db, nil
 }
 
+// IsReadOnly returns true if the database connection is read-only (e.g. a replica or a
+// role with no write privileges). Uses pg_is_in_recovery() for standbys and falls back
+// to transaction_read_only for role-level restrictions.
+func IsReadOnly(db *gorm.DB) bool {
+	var readOnly bool
+	row := db.Raw(`SELECT pg_is_in_recovery() OR current_setting('transaction_read_only') = 'on'`).Row()
+	if err := row.Scan(&readOnly); err != nil {
+		log.Printf("database: could not determine read-only status, assuming writable: %v", err)
+		return false
+	}
+	return readOnly
+}
+
 func AutoMigrate(db *gorm.DB) error {
 	if err := db.AutoMigrate(
 		&models.User{},

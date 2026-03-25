@@ -16,11 +16,15 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	if err := database.AutoMigrate(db); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+	if database.IsReadOnly(db) {
+		log.Printf("database is read-only, skipping migrations and seeding")
+	} else {
+		if err := database.AutoMigrate(db); err != nil {
+			log.Fatalf("failed to run migrations: %v", err)
+		}
+		database.SeedDefaultList(db, cfg)
+		database.SeedDefaultLabels(db, cfg)
 	}
-	database.SeedDefaultList(db, cfg)
-	database.SeedDefaultLabels(db, cfg)
 
 	r := router.Setup(db, cfg)
 
