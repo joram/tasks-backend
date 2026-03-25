@@ -14,6 +14,17 @@ import (
 	"task-tracker-api/internal/middleware"
 )
 
+func isAllowedOrigin(origin string) bool {
+	// Strip scheme
+	host := origin
+	if after, ok := strings.CutPrefix(host, "https://"); ok {
+		host = after
+	} else if after, ok := strings.CutPrefix(host, "http://"); ok {
+		host = after
+	}
+	return host == "veilstreamapp.com" || strings.HasSuffix(host, ".veilstreamapp.com")
+}
+
 const apkLatestFilename = "task-tracker-latest.apk"
 const apkVersionFilename = "version.txt"
 const apkContentType = "application/vnd.android.package-archive"
@@ -22,10 +33,10 @@ func Setup(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
+		AllowOriginFunc:  isAllowedOrigin,
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 	}))
 
 	r.GET("/health", func(c *gin.Context) {
