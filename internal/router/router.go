@@ -22,7 +22,11 @@ func isAllowedOrigin(origin string) bool {
 	} else if after, ok := strings.CutPrefix(host, "http://"); ok {
 		host = after
 	}
-	return host == "veilstreamapp.com" || strings.HasSuffix(host, ".veilstreamapp.com") || strings.HasSuffix(host, ".oram.ca")
+	return host == "veilstreamapp.com" ||
+		strings.HasSuffix(host, ".veilstreamapp.com") ||
+		strings.HasSuffix(host, ".oram.ca") ||
+		host == "localhost" ||
+		strings.HasPrefix(host, "localhost:")
 }
 
 const apkLatestFilename = "task-tracker-latest.apk"
