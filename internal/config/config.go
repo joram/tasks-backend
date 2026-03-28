@@ -2,6 +2,8 @@ package config
 
 import (
 	"log"
+	"net"
+	"net/url"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -31,7 +33,8 @@ func Load() *Config {
 
 	cfg.DatabaseURL = os.Getenv("DATABASE_DSN")
 	if cfg.DatabaseURL == "" {
-		log.Fatal("DATABASE_DSN is required")
+		cfg.DatabaseURL = defaultDatabaseURL()
+		log.Println("DATABASE_DSN not set, using default PostgreSQL URL (override with DATABASE_DSN)")
 	}
 	if cfg.JWTSecret == "" {
 		log.Fatal("JWT_SECRET is required")
@@ -48,4 +51,26 @@ func getEnvOrDefault(key, defaultVal string) string {
 		return v
 	}
 	return defaultVal
+}
+
+// defaultDatabaseURL builds a DSN for the bundled docker-compose Postgres service.
+// DATABASE_DSN, when set, takes precedence over these parts.
+func defaultDatabaseURL() string {
+	host := getEnvOrDefault("DATABASE_HOST", "postgres")
+	user := getEnvOrDefault("POSTGRES_USER", "tasktracker")
+	password := getEnvOrDefault("POSTGRES_PASSWORD", "tasktracker")
+	dbname := getEnvOrDefault("POSTGRES_DB", "tasktracker")
+	port := getEnvOrDefault("POSTGRES_PORT", "5432")
+	sslmode := getEnvOrDefault("PGSSLMODE", "disable")
+
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(user, password),
+		Host:   net.JoinHostPort(host, port),
+		Path:   "/" + dbname,
+	}
+	q := url.Values{}
+	q.Set("sslmode", sslmode)
+	u.RawQuery = q.Encode()
+	return u.String()
 }
