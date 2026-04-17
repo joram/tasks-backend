@@ -24,6 +24,8 @@ func isAllowedOrigin(origin string) bool {
 	}
 	return host == "veilstreamapp.com" ||
 		strings.HasSuffix(host, ".veilstreamapp.com") ||
+		host == "veilstreamdev.com" ||
+		strings.HasSuffix(host, ".veilstreamdev.com") ||
 		strings.HasSuffix(host, ".oram.ca") ||
 		host == "localhost" ||
 		strings.HasPrefix(host, "localhost:")
